@@ -22,6 +22,7 @@ CLIENT_CERT="~/.koji/goose.cert"
 CLIENT_CA_CERT="~/.koji/goose-client-ca.cert"
 SERVER_CA_CERT="~/.koji/goose-server-ca.cert"
 GOOSE_KOJI_SERVER="http://koji.gooselinux.org/kojihub"
+GL6_EXT=('gl6', 'gl6.1')
 
 class PyChase(cmd.Cmd):
     """
@@ -88,7 +89,7 @@ class PyChase(cmd.Cmd):
 #            print "p_info: %s" % p_info
             for i in p_info:
                 if i['name'] not in passed and i['name'] not in failed and i['name'] not in unbuilt:
-                    if i['release'].endswith('gl6'):
+                    if i['release'].endswith(GL6_EXT):
                         if i['state'] == 1:
                             passed[i['name']] = i
                             passed_count += 1
