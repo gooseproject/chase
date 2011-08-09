@@ -18,8 +18,11 @@ def main():
     sp = p.add_subparsers()
 
     p_builds = sp.add_parser("buildinfo", help=u"gather build information from package(s)")
-    p_builds.add_argument("pkgs", nargs='*', help=u"package list, if not provided, will use all packages")
-    p_builds.add_argument("--tag", help=u"name of tag")
+    p_builds.add_argument("--pkgs", nargs='*', help=u"package list, if not provided, will use all packages")
+    p_builds.add_argument('--passed', action='store_true', help=u"show only passed builds")
+    p_builds.add_argument('--failed', action='store_true', help=u"show only failed builds")
+    p_builds.add_argument('--unbuilt', action='store_true', help=u"show only unbuilt builds")
+    p_builds.add_argument("tag", help=u"name of tag")
     p_builds.set_defaults(func=pc.do_buildinfo)
 
     args = p.parse_args()
