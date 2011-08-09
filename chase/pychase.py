@@ -36,6 +36,7 @@ class PyChase(cmd.Cmd):
 
         tag = args.tag
         pkg_list = args.pkgs
+#        print "pkg_list: %s" % pkg_list
 
         #set the initial values to false
         show_passed = False
@@ -58,12 +59,14 @@ class PyChase(cmd.Cmd):
         pkgs = list()
         if pkg_list:
             for pkg in pkg_list:
-                pkg_id = self.session.search(pkg, 'package', 'glob')[0]['id']
-                builds = self.session.listPackages(pkgID=pkg_id, tagID=tag_id)
+                pkg_ids = self.session.search(pkg, 'package', 'glob')
+#                print "pkg_id: %s" % pkg_ids
+                for pi in pkg_ids:
+                    builds = self.session.listPackages(pkgID=pi['id'], tagID=tag_id)
 #                print "pkgsX: %s" % pkgs
-                for b in builds:
+                    for b in builds:
 #                    print 'pkgsY: %s' % b
-                    pkgs.append(b)
+                        pkgs.append(b)
 
 #            print "pkgs B4: %s" % pkgs
 
@@ -72,11 +75,11 @@ class PyChase(cmd.Cmd):
 
 #            print "pkgs B4: %s" % pkgs
 
-        passed = []
+        passed = {}
         passed_count = 0
-        failed = []
+        failed = {}
         failed_count = 0
-        unbuilt = []
+        unbuilt = {}
         unbuilt_count = 0
 
         for p in pkgs:
@@ -84,33 +87,47 @@ class PyChase(cmd.Cmd):
             p_info = self.session.listBuilds(packageID=p['package_id'])
 #            print "p_info: %s" % p_info
             for i in p_info:
-                if i['release'].endswith('gl6'):
-                    if i['state'] == 1:
-                        passed.append(i)
-                        passed_count += 1
+                if i['name'] not in passed and i['name'] not in failed and i['name'] not in unbuilt:
+                    if i['release'].endswith('gl6'):
+                        if i['state'] == 1:
+                            passed[i['name']] = i
+                            passed_count += 1
+                        else:
+                            failed[i['name']] = i
+                            failed_count += 1
                     else:
-                        failed.append(i)
-                        failed_count += 1
-                else:
-                    unbuilt.append(i)
-                    unbuilt_count += 1
+                        unbuilt[i['name']] = i
+                        unbuilt_count += 1
 
         # report results
-        print "=== Build Information Report ===\n"
+        print "=== Build Information Report ==="
         # print passed packages
         if show_passed:
-
+            if passed_count:
+                print
             for p in passed:
-                print "  %s\t\t\tPASSED" % p['nvr'] 
+                print "   %s " % passed[p]['nvr'], "PASSED".rjust(80-len(passed[p]['nvr']))
         if show_failed:
-            pass
+            if failed_count:
+                print
+                for f in failed:
+                    print "   %s " % failed[f]['nvr'], "FAILED".rjust(80-len(failed[f]['nvr']))
         if show_unbuilt:
-            pass
+            if unbuilt_count:
+                print 
+                for u in unbuilt:
+                    print "   %s " % unbuilt[u]['nvr'], "NOT YET BUILT".rjust(80-len(unbuilt[u]['nvr']))
 
-        print "Total Passed: %d" % passed_count
-        print " Total Failed: %d" % failed_count
-        print " Total Unbuilt: %d" % unbuilt_count
+        print
 
+        if show_passed:
+            print " Total Passed: %d" % passed_count
+        if show_failed:
+            print " Total Failed: %d" % failed_count
+        if show_unbuilt:
+            print " Total Unbuilt: %d" % unbuilt_count
+
+        print 
 
 
 
