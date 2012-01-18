@@ -22,7 +22,7 @@ CLIENT_CERT="~/.koji/goose.cert"
 CLIENT_CA_CERT="~/.koji/goose-client-ca.cert"
 SERVER_CA_CERT="~/.koji/goose-server-ca.cert"
 GOOSE_KOJI_SERVER="http://koji.gooselinux.org/kojihub"
-GL6_EXT=('gl6', 'gl6.1')
+GL6_EXT='gl6'
 
 class PyChase(cmd.Cmd):
     """
@@ -33,7 +33,34 @@ class PyChase(cmd.Cmd):
         self.session = koji.ClientSession(GOOSE_KOJI_SERVER, opts={'user': 'clints'})
         self.session.ssl_login(os.path.expanduser(CLIENT_CERT), os.path.expanduser(CLIENT_CA_CERT), os.path.expanduser(SERVER_CA_CERT))
 
+    def do_failed_pkgs(self, args):
+
+        tag = args.tag
+
+        #packages = self.session.listPackages(tagID=tag, pkgID=1311) # for testing 
+        packages = self.session.listPackages(tagID=tag)
+
+        print "-----------------------------------------------------------------"
+        for p in packages:
+#            print "package: %s" % p
+            buildinfo = self.session.listBuilds(packageID=p['package_id'])
+#            print "%s buildinfo: %s" % (p['package_name'], buildinfo)
+            has_failed = False
+            for b in buildinfo:
+                if b['state'] == 3:
+                    has_failed = True
+
+            if has_failed:
+                print "Package %s - http://kojiweb.gooselinux.org/koji/packageinfo?packageID=%s" % (p['package_name'], p['package_id'])
+                for b in buildinfo:
+                    if b['release'].find(GL6_EXT) != -1:
+                        if b['state'] == 3: print "%s: FAILED - http://kojiweb.gooselinux.org/koji/buildinfo?buildID=%s" % (b['nvr'], b['build_id'])
+                        if b['state'] == 1: print "%s: PASSED" % b['nvr'] 
+                print "-----------------------------------------------------------------"
+
+
     def do_buildinfo(self, args):
+    # buildinfo is specific to a single (or short list) of packages
 
         tag = args.tag
         pkg_list = args.pkgs
